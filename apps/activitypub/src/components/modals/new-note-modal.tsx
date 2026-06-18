@@ -8,8 +8,9 @@ import {ChangeEvent, useCallback, useEffect, useRef, useState} from 'react';
 import {ComponentPropsWithoutRef, ReactNode} from 'react';
 import {FILE_SIZE_ERROR_MESSAGE, MAX_FILE_SIZE} from '@utils/image';
 import {LucideIcon} from '@tryghost/shade/utils';
+import {htmlToPlainText} from '@utils/content-formatters';
 import {toast} from 'sonner';
-import {uploadFile, useAccountForUser, useNoteMutationForUser, useReplyMutationForUser, useUserDataForUser} from '@hooks/use-activity-pub-queries';
+import {uploadFile, useAccountForUser, useNoteMutationForUser, useReplyMutationForUser, useUpdateNoteMutationForUser, useUserDataForUser} from '@hooks/use-activity-pub-queries';
 import {useNavigateWithBasePath} from '@src/hooks/use-navigate-with-base-path';
 
 interface NewNoteModalProps extends ComponentPropsWithoutRef<typeof Dialog> {
@@ -18,15 +19,17 @@ interface NewNoteModalProps extends ComponentPropsWithoutRef<typeof Dialog> {
         object: ObjectProperties;
         actor: ActorProperties;
     };
+    editPost?: ObjectProperties;
     onReply?: () => void;
     onReplyError?: () => void;
     onOpenChange?: (open: boolean) => void;
 }
 
-const NewNoteModal: React.FC<NewNoteModalProps> = ({children, replyTo, onReply, onReplyError, onOpenChange, ...props}) => {
+const NewNoteModal: React.FC<NewNoteModalProps> = ({children, replyTo, editPost, onReply, onReplyError, onOpenChange, ...props}) => {
     const {data: user} = useUserDataForUser('index');
     const noteMutation = useNoteMutationForUser('index', user);
     const replyMutation = useReplyMutationForUser('index', user);
+    const updateNoteMutation = useUpdateNoteMutationForUser('index');
     const {data: account, isLoading: isLoadingAccount} = useAccountForUser('index', 'me');
     const [isOpen, setIsOpen] = useState(false);
     const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -44,6 +47,11 @@ const NewNoteModal: React.FC<NewNoteModalProps> = ({children, replyTo, onReply, 
     const navigate = useNavigateWithBasePath();
 
     const MAX_CONTENT_LENGTH = 500;
+    const isEditing = !!editPost;
+    const submitLabel = isEditing ? 'Save' : 'Post';
+    const getEditContent = useCallback(() => {
+        return editPost?.content ? htmlToPlainText(editPost.content) : '';
+    }, [editPost]);
 
     // Sync external open prop with internal state
     useEffect(() => {
@@ -51,6 +59,13 @@ const NewNoteModal: React.FC<NewNoteModalProps> = ({children, replyTo, onReply, 
             setIsOpen(props.open);
         }
     }, [props.open]);
+
+    useEffect(() => {
+        const modalIsOpen = props.open !== undefined ? props.open : isOpen;
+        if (modalIsOpen && isEditing) {
+            setContent(getEditContent());
+        }
+    }, [getEditContent, isEditing, isOpen, props.open]);
 
     useEffect(() => {
         const modalIsOpen = props.open !== undefined ? props.open : isOpen;
@@ -76,7 +91,12 @@ const NewNoteModal: React.FC<NewNoteModalProps> = ({children, replyTo, onReply, 
         try {
             setIsPosting(true);
 
-            if (replyTo) {
+            if (isEditing && editPost) {
+                await updateNoteMutation.mutateAsync({
+                    id: editPost.id,
+                    content: trimmedContent
+                });
+            } else if (replyTo) {
                 await replyMutation.mutateAsync({
                     inReplyTo: replyTo.object.id,
                     content: trimmedContent,
@@ -93,7 +113,7 @@ const NewNoteModal: React.FC<NewNoteModalProps> = ({children, replyTo, onReply, 
             if (onOpenChange) {
                 onOpenChange(false);
             }
-            toast.success(replyTo ? 'Reply posted' : 'Note posted');
+            toast.success(isEditing ? 'Note updated' : replyTo ? 'Reply posted' : 'Note posted');
         } catch {
             if (replyTo) {
                 onReplyError?.();
@@ -103,7 +123,7 @@ const NewNoteModal: React.FC<NewNoteModalProps> = ({children, replyTo, onReply, 
         } finally {
             setIsPosting(false);
         }
-    }, [content, user, replyTo, replyMutation, noteMutation, uploadedImageUrl, altText, onReply, onReplyError, setIsOpen, navigate, onOpenChange]);
+    }, [content, user, isEditing, editPost, replyTo, updateNoteMutation, replyMutation, noteMutation, uploadedImageUrl, altText, onReply, onReplyError, setIsOpen, navigate, onOpenChange]);
 
     const handleChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
         setContent(e.target.value);
@@ -156,6 +176,10 @@ const NewNoteModal: React.FC<NewNoteModalProps> = ({children, replyTo, onReply, 
     }, [isOpen, props.open, isDisabled, isImageUploading, handlePost]);
 
     const handlePaste = useCallback(async (e: React.ClipboardEvent | ClipboardEvent) => {
+        if (isEditing) {
+            return;
+        }
+
         const items = e.clipboardData?.items;
         if (!items) {
             return;
@@ -179,7 +203,7 @@ const NewNoteModal: React.FC<NewNoteModalProps> = ({children, replyTo, onReply, 
                 break;
             }
         }
-    }, []);
+    }, [isEditing]);
 
     useEffect(() => {
         const modalIsOpen = props.open !== undefined ? props.open : isOpen;
@@ -280,7 +304,7 @@ const NewNoteModal: React.FC<NewNoteModalProps> = ({children, replyTo, onReply, 
     return (
         <Dialog open={props.open !== undefined ? props.open : isOpen} onOpenChange={(open) => {
             if (open) {
-                setContent('');
+                setContent(isEditing ? getEditContent() : '');
                 setImagePreview(null);
                 setUploadedImageUrl(null);
                 setAltText('');
@@ -299,13 +323,15 @@ const NewNoteModal: React.FC<NewNoteModalProps> = ({children, replyTo, onReply, 
                 onOpenChange(open);
             }
         }} {...(props.open !== undefined ? {} : props)}>
-            <DialogTrigger asChild>
-                {children}
-            </DialogTrigger>
+            {children && (
+                <DialogTrigger asChild>
+                    {children}
+                </DialogTrigger>
+            )}
             <DialogContent className={`max-h-[80vh] min-h-[240px] gap-0 overflow-y-auto pb-0`} data-testid="new-note-modal" onClick={e => e.stopPropagation()}>
                 <DialogHeader className='hidden'>
-                    <DialogTitle>{replyTo ? 'Reply' : 'New note'}</DialogTitle>
-                    <DialogDescription>Post your thoughts to the Social web</DialogDescription>
+                    <DialogTitle>{isEditing ? 'Edit note' : replyTo ? 'Reply' : 'New note'}</DialogTitle>
+                    <DialogDescription>{isEditing ? 'Update your Social web note' : 'Post your thoughts to the Social web'}</DialogDescription>
                 </DialogHeader>
                 {replyTo && (
                     <FeedItem
@@ -385,13 +411,13 @@ const NewNoteModal: React.FC<NewNoteModalProps> = ({children, replyTo, onReply, 
                     </div>
                 }
                 <DialogFooter className={`${isSticky ? 'sticky' : 'static'} bottom-0 flex-row bg-background py-6 dark:bg-(--color-popover)`}>
-                    <Button className='mr-auto w-[34px] min-w-0!' variant='outline' onClick={() => imageInputRef.current?.click()}><LucideIcon.Image /></Button>
+                    {!isEditing && <Button className='mr-auto w-[34px] min-w-0!' variant='outline' onClick={() => imageInputRef.current?.click()}><LucideIcon.Image /></Button>}
                     <div className='flex items-center gap-3'>
                         <div className={`text-sm ${content.length >= MAX_CONTENT_LENGTH ? 'text-red-500' : content.length >= MAX_CONTENT_LENGTH * 0.9 ? 'text-yellow-600' : 'text-gray-500'}`}>
                             {content.length}/{MAX_CONTENT_LENGTH}
                         </div>
                         <Button className='min-w-16' data-testid="post-button" disabled={isDisabled || isImageUploading} onClick={handlePost}>
-                            {isPosting ? <LoadingIndicator color='light' size='sm' /> : 'Post'}
+                            {isPosting ? <LoadingIndicator color='light' size='sm' /> : submitLabel}
                         </Button>
                     </div>
                 </DialogFooter>

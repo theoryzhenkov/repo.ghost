@@ -1,0 +1,81 @@
+name: TheoR Images
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  packages: write
+
+env:
+  FORCE_COLOR: 1
+  NODE_VERSION: 22.18.0
+  DISABLE_V8_COMPILE_CACHE: 1
+
+jobs:
+  build-and-push:
+    name: Build and push Ghost image
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+        with:
+          submodules: true
+
+      - name: Set up pnpm
+        uses: pnpm/action-setup@0e279bb959325dab635dd2c09392533439d90093 # v6.0.8
+
+      - name: Set up Node
+        uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build server and admin assets
+        run: |
+          PKG_VERSION=$(node -p "require('./ghost/core/package.json').version")
+          SHORT_SHA="${GITHUB_SHA:0:7}"
+          export GHOST_BUILD_VERSION="${PKG_VERSION}+${SHORT_SHA}"
+          echo "GHOST_BUILD_VERSION=${GHOST_BUILD_VERSION}" >> "$GITHUB_ENV"
+          pnpm build:production
+
+      - name: Build standalone distribution
+        run: pnpm --filter ghost archive
+
+      - name: Prepare Docker build context
+        run: mv ghost/core/package/ /tmp/ghost-production/
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@d7f5e7f509e45cec5c76c4d5afdd7de93d0b3df5 # v4
+
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@650006c6eb7dba73a995cc03b0b2d7f5ca915bee # v4
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push Ghost image
+        uses: docker/build-push-action@f9f3042f7e2789586610d6e8b85c8f03e5195baf # v7
+        with:
+          context: /tmp/ghost-production
+          file: Dockerfile.production
+          target: full
+          platforms: linux/amd64
+          push: true
+          build-args: |
+            NODE_VERSION=${{ env.NODE_VERSION }}
+            GHOST_BUILD_VERSION=${{ env.GHOST_BUILD_VERSION }}
+          tags: |
+            ghcr.io/${{ github.repository_owner }}/ghost:main
+            ghcr.io/${{ github.repository_owner }}/ghost:${{ github.sha }}
+            ghcr.io/${{ github.repository_owner }}/ghost:sha-${{ github.sha }}
+          labels: |
+            org.opencontainers.image.source=https://github.com/${{ github.repository }}
+            org.opencontainers.image.revision=${{ github.sha }}

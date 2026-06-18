@@ -1,4 +1,5 @@
 import FeedItemMenu from './feed-item-menu';
+import NewNoteModal from '@components/modals/new-note-modal';
 import React, {useEffect, useRef, useState} from 'react';
 import {ActivityPubAttachment, ActorProperties, ObjectProperties} from '@tryghost/admin-x-framework/api/activitypub';
 import {Button, Skeleton} from '@tryghost/shade/components';
@@ -286,6 +287,7 @@ const FeedItem: React.FC<FeedItemProps> = ({
 
     const [, setIsCopied] = useState(false);
     const [brokenImages, setBrokenImages] = useState<Set<string>>(new Set());
+    const [isEditModalOpen, setIsEditModalOpen] = useState(false);
 
     const contentRef = useRef<HTMLDivElement>(null);
     const [isTruncated, setIsTruncated] = useState(false);
@@ -399,6 +401,19 @@ const FeedItem: React.FC<FeedItemProps> = ({
         : object.authored;
 
     const isActorCurrentUser = type === 'Announce' ? (object.reposted ?? false) : object.authored;
+    const allowEdit = isAuthorCurrentUser && type !== 'Announce' && object.type === 'Note';
+
+    const handleEdit = () => {
+        setIsEditModalOpen(true);
+    };
+
+    const editNoteModal = allowEdit ? (
+        <NewNoteModal
+            editPost={object}
+            open={isEditModalOpen}
+            onOpenChange={setIsEditModalOpen}
+        />
+    ) : null;
 
     const handleFollow = () => {
         if (authorHandle) {
@@ -428,6 +443,7 @@ const FeedItem: React.FC<FeedItemProps> = ({
     if (layout === 'feed') {
         return (
             <>
+                {editNoteModal}
                 {object && (
                     <div className={`group/article relative -mx-4 ${!isPending ? 'cursor-pointer' : 'pointer-events-none'} rounded-lg p-6 px-4 pb-[18px]`} data-layout='feed' data-object-id={object.id} onClick={onClick}>
                         {(type === 'Announce') && <div className='z-10 mb-2 flex items-center gap-1.5 text-gray-700 dark:text-gray-600'>
@@ -473,6 +489,7 @@ const FeedItem: React.FC<FeedItemProps> = ({
                                 </ProfilePreviewHoverCard>
                                 <FeedItemMenu
                                     allowDelete={allowDelete}
+                                    allowEdit={allowEdit}
                                     authoredByMe={isAuthorCurrentUser}
                                     disabled={isPending}
                                     followedByMe={followedByMe}
@@ -480,6 +497,7 @@ const FeedItem: React.FC<FeedItemProps> = ({
                                     trigger={UserMenuTrigger}
                                     onCopyLink={handleCopyLink}
                                     onDelete={handleDelete}
+                                    onEdit={handleEdit}
                                     onFollow={handleFollow}
                                     onUnfollow={handleUnfollow}
                                 />
@@ -553,9 +571,26 @@ const FeedItem: React.FC<FeedItemProps> = ({
     } else if (layout === 'modal') {
         return (
             <>
+                {editNoteModal}
                 {object && (
                     <div data-object-id={object.id}>
                         <div className={`group/article relative`} data-layout='modal' onClick={onClick}>
+                            {allowEdit && <div className='absolute top-3 right-0 z-20'>
+                                <FeedItemMenu
+                                    allowDelete={allowDelete}
+                                    allowEdit={allowEdit}
+                                    authoredByMe={isAuthorCurrentUser}
+                                    disabled={isPending}
+                                    followedByMe={followedByMe}
+                                    layout='modal'
+                                    trigger={UserMenuTrigger}
+                                    onCopyLink={handleCopyLink}
+                                    onDelete={handleDelete}
+                                    onEdit={handleEdit}
+                                    onFollow={handleFollow}
+                                    onUnfollow={handleUnfollow}
+                                />
+                            </div>}
                             <div className={`z-10 -my-1 grid grid-cols-[auto_1fr] grid-rows-[auto_1fr] gap-3 pt-4 pb-3`} data-test-activity>
                                 {(showHeader) && <>
                                     <div className='relative z-10 pt-[3px]'>
@@ -575,7 +610,7 @@ const FeedItem: React.FC<FeedItemProps> = ({
                                         </div>
                                     </div>
                                 </>}
-                                <div className={`relative z-10 col-start-1 col-end-3 w-full gap-4`}>
+                                <div className={`relative z-10 col-start-1 col-end-3 w-full gap-4 ${allowEdit ? 'pr-12' : ''}`}>
                                     <div className='flex flex-col items-start'>
                                         {object.name && <H4 className='break-anywhere mb-1 leading-tight' data-test-activity-heading>{object.name}</H4>}
                                         <div dangerouslySetInnerHTML={({__html: sanitizeHtml(openLinksInNewTab(object.content || '') ?? '')})} ref={contentRef} className='ap-note-content-large break-anywhere text-[1.6rem] tracking-[-0.011em] text-pretty text-gray-900 dark:text-gray-300 [&_p+p]:mt-3'></div>
@@ -612,6 +647,7 @@ const FeedItem: React.FC<FeedItemProps> = ({
     } else if (layout === 'reply') {
         return (
             <>
+                {editNoteModal}
                 {object && (
                     <div className={`group/article relative ${isCompact ? 'pb-6' : isChainContinuation ? 'pb-5' : 'py-5'} ${!isPending ? 'cursor-pointer' : 'pointer-events-none'}`} data-layout='reply' data-object-id={object.id} onClick={onClick}>
                         <div className={`flex flex-col gap-2.5 border-b-gray-200`} data-test-activity>
@@ -640,6 +676,7 @@ const FeedItem: React.FC<FeedItemProps> = ({
                                 </ProfilePreviewHoverCard>
                                 {!isCompact && <FeedItemMenu
                                     allowDelete={allowDelete}
+                                    allowEdit={allowEdit}
                                     authoredByMe={isAuthorCurrentUser}
                                     disabled={isPending}
                                     followedByMe={followedByMe}
@@ -647,6 +684,7 @@ const FeedItem: React.FC<FeedItemProps> = ({
                                     trigger={UserMenuTrigger}
                                     onCopyLink={handleCopyLink}
                                     onDelete={handleDelete}
+                                    onEdit={handleEdit}
                                     onFollow={handleFollow}
                                     onUnfollow={handleUnfollow}
                                 />}
@@ -692,6 +730,7 @@ const FeedItem: React.FC<FeedItemProps> = ({
     } else if (layout === 'inbox') {
         return (
             <>
+                {editNoteModal}
                 {object && (
                     <div className='group/article @container/inbox-item relative -mx-4 -my-px flex min-h-[112px] min-w-0 cursor-pointer items-center justify-between rounded-lg p-6 hover:bg-gray-100 dark:hover:bg-gray-950/50' data-layout='inbox' data-object-id={object.id} onClick={onClick}>
                         <div className='w-full min-w-0'>
@@ -756,12 +795,14 @@ const FeedItem: React.FC<FeedItemProps> = ({
                                     />}
                                     <FeedItemMenu
                                         allowDelete={allowDelete}
+                                        allowEdit={allowEdit}
                                         authoredByMe={isAuthorCurrentUser}
                                         followedByMe={followedByMe}
                                         layout='inbox'
                                         trigger={UserMenuTrigger}
                                         onCopyLink={handleCopyLink}
                                         onDelete={handleDelete}
+                                        onEdit={handleEdit}
                                         onFollow={handleFollow}
                                         onUnfollow={handleUnfollow}
                                     />

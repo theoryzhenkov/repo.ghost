@@ -5,7 +5,9 @@ interface FeedItemMenuProps {
     trigger: React.ReactNode;
     onCopyLink: () => void;
     onDelete: () => void;
+    onEdit: () => void;
     allowDelete: boolean;
+    allowEdit: boolean;
     disabled?: boolean;
     layout?: string;
     followedByMe?: boolean;
@@ -18,7 +20,9 @@ const FeedItemMenu: React.FC<FeedItemMenuProps> = ({
     trigger,
     onCopyLink,
     onDelete,
+    onEdit,
     allowDelete = false,
+    allowEdit = false,
     disabled = false,
     layout,
     followedByMe = false,
@@ -34,6 +38,11 @@ const FeedItemMenu: React.FC<FeedItemMenuProps> = ({
     const handleDeleteClick = (e: React.MouseEvent<HTMLElement>) => {
         e.stopPropagation();
         onDelete();
+    };
+
+    const handleEditClick = (e: React.MouseEvent<HTMLElement>) => {
+        e.stopPropagation();
+        onEdit();
     };
 
     const handleFollowClick = (e: React.MouseEvent<HTMLElement>) => {
@@ -58,6 +67,14 @@ const FeedItemMenu: React.FC<FeedItemMenuProps> = ({
                                 <Button className='justify-start' variant='ghost' onClick={handleCopyLinkClick}>
                                     <LucideIcon.Link />
                                     Copy link
+                                </Button>
+                            </PopoverClose>
+                        }
+                        {allowEdit &&
+                            <PopoverClose asChild>
+                                <Button className='justify-start' variant='ghost' onClick={handleEditClick}>
+                                    <LucideIcon.Pencil />
+                                    Edit
                                 </Button>
                             </PopoverClose>
                         }

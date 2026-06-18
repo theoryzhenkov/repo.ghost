@@ -130,6 +130,40 @@ describe('ActivityPubAPI', function () {
         });
     });
 
+    describe('updateNote', function () {
+        test('It updates a note and returns it', async function () {
+            const noteId = 'https://example.com/note/abc123';
+            const fakeFetch = Fetch({
+                [`https://activitypub.api/.ghost/activitypub/v1/post/${encodeURIComponent(noteId)}`]: {
+                    async assert(_resource, init) {
+                        expect(init?.method).toEqual('PUT');
+                        expect(init?.body).toEqual('{"content":"Updated note"}');
+                    },
+                    response: JSONResponse({
+                        post: {
+                            id: noteId,
+                            content: 'Updated note'
+                        }
+                    })
+                }
+            });
+
+            const api = new ActivityPubAPI(
+                new URL('https://activitypub.api'),
+                new URL('https://auth.api'),
+                'index',
+                fakeFetch
+            );
+
+            const result = await api.updateNote(noteId, 'Updated note');
+
+            expect(result).toEqual({
+                id: noteId,
+                content: 'Updated note'
+            });
+        });
+    });
+
     describe('reply', function () {
         test('It creates a reply and returns it', async function () {
             const fakeFetch = Fetch({

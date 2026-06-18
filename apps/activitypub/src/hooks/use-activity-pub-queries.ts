@@ -1491,6 +1491,64 @@ function removeActivityFromPaginatedCollection(
     });
 }
 
+function updateActivityInMatchingPaginatedCollections(
+    queryClient: QueryClient,
+    queryKey: string[],
+    collection: 'posts' | 'data',
+    id: string,
+    update: (activity: Activity) => Activity
+) {
+    queryClient.setQueriesData({queryKey, exact: false}, (current: {
+        pages: Array<{
+            [key: string]: Activity[]
+        }>
+    } | undefined) => {
+        if (!current) {
+            return current;
+        }
+
+        return {
+            ...current,
+            pages: current.pages.map(page => ({
+                ...page,
+                [collection]: page[collection].map((item: Activity) => {
+                    if (item.id === id || item.object?.id === id) {
+                        return update(item);
+                    }
+                    return item;
+                })
+            }))
+        };
+    });
+}
+
+function updatePostInReplyChain(post: Post, replyChain?: ReplyChainResponse): ReplyChainResponse | undefined {
+    if (!replyChain) {
+        return replyChain;
+    }
+
+    const updateReplyChainPost = (candidate: Post) => {
+        if (candidate.id === post.id) {
+            return post;
+        }
+        return candidate;
+    };
+
+    return {
+        ...replyChain,
+        post: updateReplyChainPost(replyChain.post),
+        ancestors: {
+            ...replyChain.ancestors,
+            chain: replyChain.ancestors.chain.map(updateReplyChainPost)
+        },
+        children: replyChain.children.map(child => ({
+            ...child,
+            post: updateReplyChainPost(child.post),
+            chain: child.chain.map(updateReplyChainPost)
+        }))
+    };
+}
+
 export function useReplyMutationForUser(handle: string, actorProps?: ActorProperties) {
     const queryClient = useQueryClient();
 
@@ -1612,6 +1670,92 @@ export function useNoteMutationForUser(handle: string, actorProps?: ActorPropert
             }
 
             toast.error('An error occurred while posting your note.');
+        }
+    });
+}
+
+export function useUpdateNoteMutationForUser(handle: string) {
+    const queryClient = useQueryClient();
+
+    return useMutation({
+        async mutationFn({id, content}: {id: string, content: string}) {
+            const siteUrl = await getSiteUrl();
+            const api = createActivityPubAPI(handle, siteUrl);
+
+            return api.updateNote(id, content);
+        },
+        onSuccess: (post: Post) => {
+            const activity = mapPostToActivity(post);
+            const collections: Array<{queryKey: string[], collection: 'posts' | 'data'}> = [
+                {queryKey: QUERY_KEYS.feed, collection: 'posts'},
+                {queryKey: QUERY_KEYS.inbox, collection: 'posts'},
+                {queryKey: QUERY_KEYS.discoveryFeed, collection: 'posts'},
+                {queryKey: QUERY_KEYS.profilePosts(null), collection: 'posts'},
+                {queryKey: QUERY_KEYS.postsLikedByAccount, collection: 'posts'},
+                {queryKey: QUERY_KEYS.outbox(handle), collection: 'data'}
+            ];
+
+            for (const {queryKey, collection} of collections) {
+                updateActivityInMatchingPaginatedCollections(
+                    queryClient,
+                    queryKey,
+                    collection,
+                    post.id,
+                    (item: Activity) => {
+                        if (item.id === post.id) {
+                            return activity;
+                        }
+
+                        return {
+                            ...item,
+                            object: {
+                                ...item.object,
+                                ...activity.object
+                            }
+                        };
+                    }
+                );
+            }
+
+            queryClient.setQueriesData(
+                {queryKey: QUERY_KEYS.replyChain(null), exact: false},
+                (current?: ReplyChainResponse) => updatePostInReplyChain(post, current)
+            );
+
+            queryClient.setQueriesData(
+                {queryKey: QUERY_KEYS.notifications(handle), exact: false},
+                (current?: {pages: {notifications: Notification[]}[]}) => {
+                    if (!current) {
+                        return current;
+                    }
+
+                    return {
+                        ...current,
+                        pages: current.pages.map(page => ({
+                            ...page,
+                            notifications: page.notifications.map((notification) => {
+                                if (notification.post?.id === post.id) {
+                                    return {
+                                        ...notification,
+                                        post: {
+                                            ...notification.post,
+                                            content: post.content,
+                                            title: post.title,
+                                            url: post.url
+                                        }
+                                    };
+                                }
+                                return notification;
+                            })
+                        }))
+                    };
+                }
+            );
+        },
+        onError(error: {message: string, statusCode: number}) {
+            // eslint-disable-next-line no-console
+            console.error(error);
+            toast.error('An error occurred while updating your note.');
         }
     });
 }

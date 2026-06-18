@@ -24,6 +24,12 @@ export function sanitizeHtml(html: string): string {
     return DOMPurify.sanitize(html);
 }
 
+export function decodeHtmlEntities(text: string): string {
+    const textarea = document.createElement('textarea');
+    textarea.innerHTML = text;
+    return textarea.value;
+}
+
 export function stripHtml(html: string, exclude: string[] = []): string {
     // If no exclusions, use the original logic
     if (exclude.length === 0) {
@@ -76,6 +82,10 @@ export function stripHtml(html: string, exclude: string[] = []): string {
     }
 
     return result;
+}
+
+export function htmlToPlainText(html: string): string {
+    return decodeHtmlEntities(stripHtml(html, ['br']).replace(/<br\s*\/?>/gi, '\n')).trim();
 }
 
 export const formatArticle = (content: string, postUrl?: string) => {

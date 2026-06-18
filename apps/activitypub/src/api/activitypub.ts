@@ -439,6 +439,12 @@ export class ActivityPubAPI {
         return (response as {post: Post}).post;
     }
 
+    async updateNote(id: string, content: string): Promise<Post> {
+        const url = new URL(`.ghost/activitypub/v1/post/${encodeURIComponent(id)}`, this.apiUrl);
+        const response = await this.fetchJSON(url, 'PUT', {content});
+        return (response as {post: Post}).post;
+    }
+
     async delete(id: string): Promise<void> {
         const url = new URL(`.ghost/activitypub/v1/post/${encodeURIComponent(id)}`, this.apiUrl);
         await this.fetchJSON(url, 'DELETE');
