@@ -1,5 +1,5 @@
 <div
-    class="settings-menu-container {{if (or (eq this.subview "codeinjection") (eq this.subview "meta-data") (eq this.subview "twitter-data") (eq this.subview "facebook-data")) "settings-menu-container-wide"}}"
+    class="settings-menu-container {{if (or (eq this.subview "codeinjection") (eq this.subview "frontmatter") (eq this.subview "meta-data") (eq this.subview "twitter-data") (eq this.subview "facebook-data")) "settings-menu-container-wide"}}"
     {{did-insert this.setSidebarWidthFromElement}}
     {{did-update this.setSidebarWidthFromElement this.isViewingSubview}}
 >
@@ -193,6 +193,12 @@
                             {{svg-jar "arrow-right" class="arrow-right"}}
                         </li>
                         <li class="nav-list-item">
+                            <button type="button" {{on "click" (fn this.showSubview "frontmatter")}} data-test-button="frontmatter">
+                                <span>{{svg-jar "brackets"}} TheoR metadata</span>
+                            </button>
+                            {{svg-jar "arrow-right" class="arrow-right"}}
+                        </li>
+                        <li class="nav-list-item">
                             <button type="button" {{action "showSubview" "meta-data"}} data-test-button="meta-data">
                                 <span>{{svg-jar "google-icon"}} Meta data</span>
                             </button>
@@ -229,7 +235,7 @@
         </div>{{! .post-settings-menu }}
 
         {{#if this.isViewingSubview}}
-        <div class="settings-menu settings-menu-pane {{if (or (eq this.subview "codeinjection") (eq this.subview "meta-data") (eq this.subview "twitter-data") (eq this.subview "facebook-data")) "settings-menu-pane-wide"}}">
+        <div class="settings-menu settings-menu-pane {{if (or (eq this.subview "codeinjection") (eq this.subview "frontmatter") (eq this.subview "meta-data") (eq this.subview "twitter-data") (eq this.subview "facebook-data")) "settings-menu-pane-wide"}}">
             <div class="active">
                     {{#if (eq this.subview "keyboard-shortcuts")}}
                         <div class="settings-menu-header subview">
@@ -801,6 +807,32 @@
                                     </div>
                                 </div>
 
+                            </form>
+                        </div>
+                    {{/if}}
+
+                    {{#if (eq this.subview "frontmatter")}}
+                        <div class="settings-menu-header subview">
+                            <button aria-label="Close TheoR metadata panel" class="back settings-menu-header-action" data-test-button="close-psm-subview" type="button" {{on "click" this.closeSubview}}>{{svg-jar "arrow-left"}}<span class="hidden">Back</span></button>
+                            <h4>TheoR metadata</h4>
+                            <div style="width:23px;"></div>
+                        </div>
+
+                        <div class="settings-menu-content settings-menu-content-codeinjection">
+                            <form {{on "submit" this.discardEnter}} class="gh-post-settings" aria-label="TheoR metadata settings">
+                                <GhFormGroup @errors={{this.post.errors}} @hasValidated={{this.post.hasValidated}} @property="frontmatter">
+                                    <label for="post-setting-frontmatter">{{capitalize this.post.displayName}} frontmatter</label>
+                                    <GhCmEditor @value={{this.frontmatterScratch}}
+                                        @id="post-setting-frontmatter"
+                                        @class="post-setting-codeinjection"
+                                        @name="post-setting-frontmatter"
+                                        @focus-out={{fn this.setFrontmatter this.frontmatterScratch}}
+                                        @stopEnterKeyDownPropagation="true"
+                                        @update={{this.updateFrontmatterScratch}}
+                                        data-test-field="frontmatter" />
+                                    <GhErrorMessage @errors={{this.post.errors}} @property="frontmatter" data-test-error="frontmatter" />
+                                    <p>YAML, TOML, or JSON metadata for TheoR site rendering. Stored separately from visible content.</p>
+                                </GhFormGroup>
                             </form>
                         </div>
                     {{/if}}

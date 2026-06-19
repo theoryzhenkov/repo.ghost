@@ -496,6 +496,42 @@ describe('Posts API', function () {
             assert.equal(mobiledocRevisions.length, 0);
         });
 
+        it('Can create and update post frontmatter', async function () {
+            const originalFrontmatter = '---\nkind: note\nfeatured: true\n---';
+            const updatedFrontmatter = '---\nkind: profile\nhomePath: /about\n---';
+
+            const {body: postBody} = await agent
+                .post('/posts/')
+                .body({posts: [{
+                    title: 'Frontmatter metadata test',
+                    frontmatter: originalFrontmatter
+                }]})
+                .expectStatus(201);
+
+            const [postResponse] = postBody.posts;
+
+            assert.equal(postResponse.frontmatter, originalFrontmatter);
+
+            const {body: updatedPostBody} = await agent
+                .put(`/posts/${postResponse.id}/`)
+                .body({posts: [Object.assign({}, postResponse, {frontmatter: updatedFrontmatter})]})
+                .expectStatus(200);
+
+            const [updatedPostResponse] = updatedPostBody.posts;
+
+            assert.equal(updatedPostResponse.frontmatter, updatedFrontmatter);
+
+            const model = await models.Post.findOne({
+                id: postResponse.id,
+                status: 'all'
+            }, {
+                context: {internal: true},
+                withRelated: ['posts_meta']
+            });
+
+            assert.equal(model.related('posts_meta').get('frontmatter'), updatedFrontmatter);
+        });
+
         it('Does not create a revision when editing a lexical post without save_revision within the revision interval', async function () {
             const originalLexical = createLexical('Original text for interval test');
             const updatedLexical = createLexical('First update for interval test');

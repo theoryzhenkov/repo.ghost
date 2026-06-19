@@ -11,6 +11,7 @@ export default BaseValidator.create({
         'canonicalUrl',
         'codeinjectionHead',
         'codeinjectionFoot',
+        'frontmatter',
         'metaTitle',
         'metaDescription',
         'ogtitle',
@@ -94,6 +95,13 @@ export default BaseValidator.create({
     codeinjectionHead(model) {
         if (!validator.isLength(model.codeinjectionHead || '', {max: 65535})) {
             model.errors.add('codeinjectionHead', 'Header code cannot be longer than 65535 characters.');
+            this.invalidate();
+        }
+    },
+
+    frontmatter(model) {
+        if (!validator.isLength(model.frontmatter || '', {max: 65535})) {
+            model.errors.add('frontmatter', 'Frontmatter cannot be longer than 65535 characters.');
             this.invalidate();
         }
     },

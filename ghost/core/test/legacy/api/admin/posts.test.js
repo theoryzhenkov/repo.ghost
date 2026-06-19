@@ -684,7 +684,6 @@ describe('Posts API', function () {
                         .set('Origin', config.get('url'))
                         .send({
                             posts: [{
-                                frontmatter: 'hey!',
                                 plaintext: 'hello!',
                                 updated_at: res.body.posts[0].updated_at
                             }]
@@ -699,7 +698,6 @@ describe('Posts API', function () {
 
                     assertExists(res.body.posts);
                     assertExists(res.body.posts[0].published_at);
-                    assert.equal(res.body.posts[0].frontmatter, null);
                     assert.equal(res.body.posts[0].plaintext, testUtils.DataGenerator.Content.posts[0].plaintext);
                 });
         });

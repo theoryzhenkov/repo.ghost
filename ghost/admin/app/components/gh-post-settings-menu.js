@@ -48,6 +48,9 @@ export default class GhPostSettingsMenu extends Component {
     @alias('post.metaTitleScratch')
         metaTitleScratch;
 
+    @alias('post.frontmatterScratch')
+        frontmatterScratch;
+
     @alias('post.ogDescriptionScratch')
         ogDescriptionScratch;
 
@@ -201,8 +204,14 @@ export default class GhPostSettingsMenu extends Component {
     }
 
     @action
-    discardEnter() {
+    discardEnter(event) {
+        event?.preventDefault();
         return false;
+    }
+
+    @action
+    updateFrontmatterScratch(frontmatter) {
+        this.set('frontmatterScratch', frontmatter);
     }
 
     @action
@@ -349,6 +358,20 @@ export default class GhPostSettingsMenu extends Component {
         post.set('codeinjectionFoot', code);
 
         return post.validate({property: 'codeinjectionFoot'}).then(() => this.savePostTask.perform());
+    }
+
+    @action
+    setFrontmatter(frontmatter) {
+        let post = this.post;
+        let currentFrontmatter = post.get('frontmatter');
+
+        if (frontmatter === currentFrontmatter) {
+            return;
+        }
+
+        post.set('frontmatter', frontmatter);
+
+        return post.validate({property: 'frontmatter'}).then(() => this.savePostTask.perform());
     }
 
     @action

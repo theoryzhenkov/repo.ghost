@@ -13,6 +13,36 @@ const Post = EmberObject.extend(ValidationEngine, {
 });
 
 describe('Unit: Validator: post', function () {
+    describe('frontmatter', function () {
+        it('can be blank', async function () {
+            let post = Post.create({frontmatter: ''});
+            let passed = await post.validate({property: 'frontmatter'}).then(() => true);
+
+            expect(passed, 'passed').to.be.true;
+            expect(post.hasValidated).to.include('frontmatter');
+        });
+
+        it('accepts markdown-like metadata', async function () {
+            let post = Post.create({frontmatter: '---\nkind: profile\nhomePath: /about\n---'});
+            let passed = await post.validate({property: 'frontmatter'}).then(() => true);
+
+            expect(passed, 'passed').to.be.true;
+            expect(post.hasValidated).to.include('frontmatter');
+        });
+
+        it('cannot be too long', async function () {
+            let post = Post.create({frontmatter: new Array(65537).join('x')});
+            let passed = await post.validate({property: 'frontmatter'}).then(() => true).catch(() => false);
+
+            expect(passed, 'passed').to.be.false;
+            expect(post.hasValidated).to.include('frontmatter');
+
+            let error = post.errors.errorsFor('frontmatter').get(0);
+            expect(error.attribute).to.equal('frontmatter');
+            expect(error.message).to.equal('Frontmatter cannot be longer than 65535 characters.');
+        });
+    });
+
     describe('canonicalUrl', function () {
         it('can be blank', async function () {
             let post = Post.create({canonicalUrl: ''});
