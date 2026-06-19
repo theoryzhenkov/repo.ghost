@@ -43,7 +43,9 @@ jobs:
           SHORT_SHA="${GITHUB_SHA:0:7}"
           export GHOST_BUILD_VERSION="${PKG_VERSION}+${SHORT_SHA}"
           echo "GHOST_BUILD_VERSION=${GHOST_BUILD_VERSION}" >> "$GITHUB_ENV"
-          pnpm build:production
+          pnpm nx run ghost:build:tsc --skip-nx-cache
+          pnpm nx run ghost:build:assets --skip-nx-cache
+          pnpm nx run @tryghost/admin:build --skip-nx-cache
 
       - name: Build standalone distribution
         run: pnpm --filter ghost archive
