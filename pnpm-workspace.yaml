@@ -206,3 +206,6 @@ minimumReleaseAgeExclude:
   - "knex-migrator"
   # Renovate security update: file-type@21.3.1 || 21.3.2
   - file-type@21.3.1 || 21.3.2
+patchedDependencies:
+  '@tryghost/kg-default-nodes@2.1.2': patches/@tryghost__kg-default-nodes@2.1.2.patch
+  '@tryghost/koenig-lexical@1.8.2': patches/@tryghost__koenig-lexical@1.8.2.patch

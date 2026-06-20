@@ -1,12 +1,23 @@
 import * as Sentry from '@sentry/ember';
 import Component from '@glimmer/component';
 import React, {Suspense} from 'react';
+import fetch from 'fetch';
 import moment from 'moment-timezone';
+import {CircleX, Info, Lightbulb, MessageSquareQuote, Sparkles, TriangleAlert} from 'lucide-react';
 import {action} from '@ember/object';
 import {didCancel, task} from 'ember-concurrency';
 import {inject} from 'ghost-admin/decorators/inject';
 import {koenigFileUploadTypes, useKoenigFileUpload} from '@tryghost/admin-x-framework/hooks';
 import {inject as service} from '@ember/service';
+
+const THEOR_CALLOUT_ICONS = [
+    {name: 'info', label: 'Info', Icon: Info, dataTestId: 'theor-callout-icon-info'},
+    {name: 'lightbulb', label: 'Tip', Icon: Lightbulb, dataTestId: 'theor-callout-icon-lightbulb'},
+    {name: 'sparkles', label: 'Important', Icon: Sparkles, dataTestId: 'theor-callout-icon-sparkles'},
+    {name: 'triangle-alert', label: 'Warning', Icon: TriangleAlert, dataTestId: 'theor-callout-icon-triangle-alert'},
+    {name: 'circle-x', label: 'Danger', Icon: CircleX, dataTestId: 'theor-callout-icon-circle-x'},
+    {name: 'message-square-quote', label: 'Quote', Icon: MessageSquareQuote, dataTestId: 'theor-callout-icon-message-square-quote'}
+];
 
 function LockIcon({...props}) {
     return (
@@ -147,6 +158,8 @@ export default class KoenigLexicalEditor extends Component {
     offers = null;
     contentKey = null;
     defaultLinks = null;
+    homeLinks = null;
+    homeLinksPromise = null;
 
     editorResource = this.koenig.resource;
 
@@ -234,6 +247,38 @@ export default class KoenigLexicalEditor extends Component {
         this.offers = yield this.store.query('offer', {filter: 'status:active+redemption_type:signup'});
 
         return this.offers;
+    }
+
+    async fetchHomeLinks() {
+        if (this.homeLinks) {
+            return this.homeLinks;
+        }
+
+        if (!this.homeLinksPromise) {
+            this.homeLinksPromise = fetch('https://home.theor.net/popup-index.json', {
+                headers: {
+                    Accept: 'application/json'
+                }
+            }).then(async (response) => {
+                if (!response.ok) {
+                    return [];
+                }
+
+                const index = await response.json();
+                return Object.entries(index)
+                    .filter(([, page]) => page?.title)
+                    .map(([path, page]) => ({
+                        id: `home:${path}`,
+                        title: page.title,
+                        url: new URL(path, 'https://home.theor.net').toString(),
+                        description: page.description,
+                        maturity: page.maturity
+                    }));
+            }).catch(() => []);
+        }
+
+        this.homeLinks = await this.homeLinksPromise;
+        return this.homeLinks;
     }
 
     @task({restartable: false})
@@ -340,7 +385,10 @@ export default class KoenigLexicalEditor extends Component {
                     return this.defaultLinks;
                 }
 
-                const posts = await this.store.query('post', {filter: 'status:published', fields: 'id,url,title,visibility,published_at', order: 'published_at desc', limit: 5});
+                const [posts, homeLinks] = await Promise.all([
+                    this.store.query('post', {filter: 'status:published', fields: 'id,url,title,visibility,published_at', order: 'published_at desc', limit: 5}),
+                    this.fetchHomeLinks()
+                ]);
                 // NOTE: these posts are Ember Data models, not plain objects like the search results
                 const results = posts.toArray().map(post => ({
                     groupName: 'Latest posts',
@@ -356,14 +404,21 @@ export default class KoenigLexicalEditor extends Component {
                 this.defaultLinks = [{
                     label: 'Latest posts',
                     items: results
-                }];
+                }, {
+                    label: 'Home pages',
+                    items: homeLinks.slice(0, 5)
+                }].filter(group => group.items.length > 0);
                 return this.defaultLinks;
             }
 
             let results = [];
+            let homeLinks = [];
 
             try {
-                results = await this.search.searchTask.perform(term);
+                [results, homeLinks] = await Promise.all([
+                    this.search.searchTask.perform(term),
+                    this.fetchHomeLinks()
+                ]);
             } catch (error) {
                 // don't surface task cancellation errors
                 if (!didCancel(error)) {
@@ -371,6 +426,15 @@ export default class KoenigLexicalEditor extends Component {
                 }
                 return;
             }
+
+            const normalizedTerm = term.trim().toLowerCase();
+            const matchingHomeLinks = homeLinks
+                .filter((item) => {
+                    return item.title.toLowerCase().includes(normalizedTerm)
+                        || item.url.toLowerCase().includes(normalizedTerm)
+                        || item.description?.toLowerCase().includes(normalizedTerm);
+                })
+                .slice(0, 10);
 
             // only published posts/pages and staff with posts have URLs
             const filteredResults = [];
@@ -399,6 +463,13 @@ export default class KoenigLexicalEditor extends Component {
                     items
                 });
             });
+
+            if (matchingHomeLinks.length > 0) {
+                filteredResults.push({
+                    label: 'Home pages',
+                    items: matchingHomeLinks
+                });
+            }
 
             return filteredResults;
         };
@@ -443,6 +514,7 @@ export default class KoenigLexicalEditor extends Component {
             siteDescription: this.settings.description,
             siteUrl: this.config.getSiteUrl('/'),
             siteUuid: this.config.site_uuid,
+            theorCalloutIcons: THEOR_CALLOUT_ICONS,
             stripeEnabled: checkStripeEnabled(), // returns a boolean
             visibilitySettings: getCardVisibilitySettings(props.cardConfig)
         };
