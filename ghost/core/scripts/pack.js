@@ -82,7 +82,7 @@ const workspaceSrc = path.join(ROOT_DIR, 'pnpm-workspace.yaml');
 const workspaceDst = path.join(DEPLOY_DIR, 'pnpm-workspace.yaml');
 const rootWorkspace = yaml.load(fs.readFileSync(workspaceSrc, 'utf8'));
 const deployWorkspace = {};
-for (const key of ['catalog', 'catalogs', 'allowBuilds', 'strictDepBuilds', 'overrides', 'packageExtensions']) {
+for (const key of ['catalog', 'catalogs', 'allowBuilds', 'strictDepBuilds', 'overrides', 'packageExtensions', 'patchedDependencies']) {
     if (rootWorkspace[key] !== undefined) {
         deployWorkspace[key] = rootWorkspace[key];
     }
@@ -93,9 +93,39 @@ for (const key of ['catalog', 'catalogs', 'allowBuilds', 'strictDepBuilds', 'ove
 // @tryghost/parse-email-address) aren't on npm so the age check 404s and
 // fails the install.
 deployWorkspace.minimumReleaseAge = 0;
+
+// Keep only patches whose target package is in the production dependency tree.
+// Editor-only patches (e.g. @tryghost/koenig-lexical, already baked into the
+// prebuilt admin bundle) aren't runtime deps of ghost/core and would trip
+// pnpm's unused-patch check during the standalone install.
+if (deployWorkspace.patchedDependencies) {
+    const keptPatches = {};
+    for (const [spec, file] of Object.entries(deployWorkspace.patchedDependencies)) {
+        const pkgName = spec.replace(/@[^@/]+$/, '');
+        if (fs.existsSync(path.join(DEPLOY_DIR, 'node_modules', pkgName))) {
+            keptPatches[spec] = file;
+        } else {
+            console.log(`Dropping patch not in production deps: ${spec}`);
+        }
+    }
+    deployWorkspace.patchedDependencies = keptPatches;
+}
+
 fs.writeFileSync(workspaceDst, yaml.dump(deployWorkspace));
 
 console.log('Wrote trimmed pnpm-workspace.yaml (catalogs + overrides + allowBuilds, age check off)');
+
+// Copy pnpm patch files into the deploy dir so `patchedDependencies` resolve
+// during the standalone production install (Dockerfile.production runs a fresh
+// `pnpm install --prod`). Without these, runtime deps would install unpatched
+// even though the source workspace patches them.
+const patchesSrc = path.join(ROOT_DIR, 'patches');
+const patchesDst = path.join(DEPLOY_DIR, 'patches');
+fsExtra.ensureDirSync(patchesDst);
+if (fs.existsSync(patchesSrc)) {
+    fsExtra.copySync(patchesSrc, patchesDst);
+    console.log('Copied patches/ into the deploy dir for patchedDependencies');
+}
 
 // Pack private workspace packages as component tarballs.
 // These are not on npm, so ghost-cli can't install them from the registry.
