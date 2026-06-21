@@ -34,17 +34,54 @@ const DEPLOY_DIR = path.join(CORE_DIR, 'package');
 // because it conflicts with packages that have build outputs in their files field.
 console.log('Running pnpm deploy...');
 fs.rmSync(DEPLOY_DIR, {recursive: true, force: true});
-execFileSync(
-    'pnpm',
-    [
-        '--filter', 'ghost',
-        'deploy', DEPLOY_DIR,
-        '--prod',
-        '--config.inject-workspace-packages=true',
-        '--config.ignore-scripts=true'
-    ],
-    {cwd: ROOT_DIR, stdio: 'inherit'}
-);
+
+const vendorSrc = path.join(ROOT_DIR, 'vendor');
+const vendorDst = path.join(DEPLOY_DIR, 'vendor');
+const workspaceSrc = path.join(ROOT_DIR, 'pnpm-workspace.yaml');
+const lockfileSrc = path.join(ROOT_DIR, 'pnpm-lock.yaml');
+const originalWorkspace = fs.readFileSync(workspaceSrc, 'utf8');
+const originalLockfile = fs.readFileSync(lockfileSrc, 'utf8');
+
+// pnpm deploy resolves root-level `file:vendor/...` overrides relative to its
+// generated deploy directory, before we can copy `vendor/` into that directory.
+// Temporarily make those override paths absolute for the deploy subprocess;
+// the packaged pnpm-workspace.yaml is written later with relative paths again.
+try {
+    const deployRootWorkspace = yaml.load(originalWorkspace);
+    if (deployRootWorkspace.overrides) {
+        for (const [name, value] of Object.entries(deployRootWorkspace.overrides)) {
+            if (typeof value === 'string' && value.startsWith('file:vendor/')) {
+                deployRootWorkspace.overrides[name] = `file:${path.join(ROOT_DIR, value.slice('file:'.length))}`;
+            }
+        }
+        fs.writeFileSync(workspaceSrc, yaml.dump(deployRootWorkspace));
+    }
+
+    const absoluteVendorPrefix = `file:${path.join(ROOT_DIR, 'vendor')}/`;
+    fs.writeFileSync(
+        lockfileSrc,
+        originalLockfile
+            .replaceAll('file:vendor/', absoluteVendorPrefix)
+            .replaceAll('file:../../vendor/', absoluteVendorPrefix)
+    );
+
+    execFileSync(
+        'pnpm',
+        [
+            '--filter', 'ghost',
+            'deploy', DEPLOY_DIR,
+            '--prod',
+            '--no-frozen-lockfile',
+            '--config.inject-workspace-packages=true',
+            '--config.ignore-scripts=true',
+            '--config.minimumReleaseAge=0'
+        ],
+        {cwd: ROOT_DIR, stdio: 'inherit'}
+    );
+} finally {
+    fs.writeFileSync(workspaceSrc, originalWorkspace);
+    fs.writeFileSync(lockfileSrc, originalLockfile);
+}
 
 // 2. Fix package.json
 console.log('\nPost-processing package.json...');
@@ -78,7 +115,6 @@ for (const section of ['dependencies', 'devDependencies', 'optionalDependencies'
 // Written early (rather than after the pack loop) so workspace component
 // `pnpm pack` calls below have catalog context to resolve `catalog:` refs
 // in their devDependencies.
-const workspaceSrc = path.join(ROOT_DIR, 'pnpm-workspace.yaml');
 const workspaceDst = path.join(DEPLOY_DIR, 'pnpm-workspace.yaml');
 const rootWorkspace = yaml.load(fs.readFileSync(workspaceSrc, 'utf8'));
 const deployWorkspace = {};
@@ -127,6 +163,14 @@ if (fs.existsSync(patchesSrc)) {
     console.log('Copied patches/ into the deploy dir for patchedDependencies');
 }
 
+// Copy source-built Koenig package tarballs referenced by root pnpm overrides.
+// These replace brittle minified patchedDependencies while keeping the
+// standalone production install reproducible.
+if (fs.existsSync(vendorSrc)) {
+    fsExtra.copySync(vendorSrc, vendorDst);
+    console.log('Copied vendor/ into the deploy dir for file: overrides');
+}
+
 // Pack private workspace packages as component tarballs.
 // These are not on npm, so ghost-cli can't install them from the registry.
 // pnpm deploy writes absolute file:// refs that won't work on another machine.
@@ -135,6 +179,12 @@ fs.mkdirSync(componentsDir, {recursive: true});
 
 for (const [key, val] of Object.entries(pkg.dependencies || {})) {
     if (typeof val !== 'string' || !val.includes('file:')) {
+        continue;
+    }
+
+    // Source-built Koenig tarballs are carried by vendor/ and root overrides;
+    // they are already packed and should not have `pnpm pack` run again.
+    if (val.includes('vendor/koenig')) {
         continue;
     }
 
