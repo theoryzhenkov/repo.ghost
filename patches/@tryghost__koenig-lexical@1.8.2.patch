@@ -1,5 +1,5 @@
 diff --git a/dist/koenig-lexical.js b/dist/koenig-lexical.js
-index 1bc0a6a25a1a94cda1ee17a468952236a7cc2616..c6c33e219d949dcd2af04a906547accac789594b 100644
+index 1bc0a6a25a..c5f5d6ee66 100644
 --- a/dist/koenig-lexical.js
 +++ b/dist/koenig-lexical.js
 @@ -10611,17 +10611,76 @@ function tc(e, t) {
@@ -779,8 +779,67 @@ index 1bc0a6a25a1a94cda1ee17a468952236a7cc2616..c6c33e219d949dcd2af04a906547acca
  				nodeKey: this.getKey(),
  				textEditor: this.__calloutTextEditor,
  				textEditorInitialState: this.__calloutTextEditorInitialState
+@@ -77843,35 +77582,35 @@ function mue() {
+ var hue = ({ searchLinks: e, siteUrl: n }) => {
+ 	let [r] = (0, q.useLexicalComposerContext)(), [i, a] = t.useState(null), [o, s] = t.useState(""), { isSearching: c, listOptions: l } = dy(o, e, t.useMemo(() => ({ noResultOptions: mue }), []));
+ 	t.useEffect(() => {
+-		let e = r.getRootElement(), t = (e) => {
+-			if (!e.isComposing && e.inputType === "insertText" && e.data === "@") {
+-				let e = !1;
++		let e = r.getRootElement(), t = (e, t = !1) => {
++			if (!e.isComposing && e.inputType === "insertText" && (e.data === "@" || e.data === "[")) {
++				let n = e.data, i = t;
+ 				r.getEditorState().read(() => {
+-					let t = (0, B.$getSelection)();
+-					if (!(0, B.$isRangeSelection)(t) || !t.isCollapsed()) return;
+-					let n = t.anchor;
+-					if (n.type !== "text") return;
+-					let r = n.getNode();
++					let e = (0, B.$getSelection)();
++					if (!(0, B.$isRangeSelection)(e) || !e.isCollapsed()) return;
++					let t = e.anchor;
++					if (t.type !== "text") return;
++					let r = t.getNode();
+ 					if (!r.isSimpleText()) return;
+-					let i = n.offset, a = r.getTextContent().slice(0, i), o = r.getTextContent().slice(i), s = r.getPreviousSibling(), c = r.getNextSibling();
+-					i === 0 && (0, B.$isTextNode)(s) && (a = s.getTextContent()), i === r.getTextContent().length && (0, B.$isTextNode)(c) && (o = c.getTextContent()), /(^|\s)@$/.test(a) && /^($|\s|\.)/.test(o) && (e = !0);
+-				}), e && r.update(() => {
+-					let e = (0, B.$getSelection)(), t = e.anchor.getNode().getFormat();
+-					e.deleteCharacter(!0);
+-					let n = Jh();
+-					n.setLinkFormat(t);
+-					let r = eg();
+-					n.append(r);
+-					let i = Zh("");
+-					n.append(i), e.insertNodes([n]), n.select(1, 1);
+-					let a = n.getChildAtIndex(1), o = (0, B.$getSelection)();
+-					(0, B.$isRangeSelection)(o) && (o.anchor.set(a.getKey(), 0, "element"), o.focus.set(a.getKey(), 0, "element"));
++					let a = t.offset, o = r.getTextContent().slice(0, a), s = r.getTextContent().slice(a), c = r.getPreviousSibling(), l = r.getNextSibling();
++					a === 0 && (0, B.$isTextNode)(c) && (o = c.getTextContent()), a === r.getTextContent().length && (0, B.$isTextNode)(l) && (s = l.getTextContent()), new RegExp(`(^|\\s)\\${n}$`).test(o) && /^($|\s|\.)/.test(s) && (i = !0);
++				}), i && r.update(() => {
++					let t = (0, B.$getSelection)(), n = t.anchor.getNode().getFormat();
++					e.preventDefault?.(), t.anchor.type === "text" && t.deleteCharacter(!0);
++					let i = Jh();
++					i.setLinkFormat(n);
++					let a = eg();
++					i.append(a);
++					let o = Zh("");
++					i.append(o), t.insertNodes([i]), i.select(1, 1);
++					let s = i.getChildAtIndex(1), c = (0, B.$getSelection)();
++					(0, B.$isRangeSelection)(c) && (c.anchor.set(s.getKey(), 0, "element"), c.focus.set(s.getKey(), 0, "element"));
+ 				});
+ 			}
+ 		}, n = (e) => {
+-			e.inputType === "insertText" && e.data === "@" && r.update(() => {
++			(e.inputType === "insertText" && (e.data === "@" || e.data === "[")) && r.update(() => {
+ 				let n = (0, B.$getSelection)();
+-				(0, B.$isRangeSelection)(n) && n.isCollapsed() && !n.anchor.getNode().getPreviousSibling() && t(e);
++				(0, B.$isRangeSelection)(n) && n.isCollapsed() && n.anchor.type !== "text" && t(e, !0);
+ 			});
+ 		};
+ 		return e.addEventListener("input", t), e.addEventListener("beforeinput", n), () => {
 diff --git a/dist/koenig-lexical.umd.js b/dist/koenig-lexical.umd.js
-index 33278595b1d589cc431dc78d01e3e8c00a28d29a..b20e1323df01c84655b671041ae605ceab99e4a4 100644
+index 33278595b1..b20e1323df 100644
 --- a/dist/koenig-lexical.umd.js
 +++ b/dist/koenig-lexical.umd.js
 @@ -183,7 +183,7 @@

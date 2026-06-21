@@ -365,7 +365,7 @@ packageExtensionsChecksum: sha256-gFsvptlcVXY90ntXWh9ANUP1/LYyeqXjWoDGw6BCfOY=
 
 patchedDependencies:
   '@tryghost/kg-default-nodes@2.1.2': 86a02fb0eca812a59285e0b4fe12631af081b0b18d91b0cc33742d4b3081ff81
-  '@tryghost/koenig-lexical@1.8.2': eb77f5ab3e1e8ef585fd1b23d3e1ab36f79e0d461991da8f7e28e93374cf4434
+  '@tryghost/koenig-lexical@1.8.2': fd4910d88e320803df03e7fff30bd3a330737f6e3de621c68539d7112924a6ca
 
 importers:
 
@@ -536,7 +536,7 @@ importers:
         version: 0.4.2(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       '@tryghost/koenig-lexical':
         specifier: 'catalog:'
-        version: 1.8.2(patch_hash=eb77f5ab3e1e8ef585fd1b23d3e1ab36f79e0d461991da8f7e28e93374cf4434)
+        version: 1.8.2(patch_hash=fd4910d88e320803df03e7fff30bd3a330737f6e3de621c68539d7112924a6ca)
       '@tryghost/posts':
         specifier: workspace:*
         version: link:../posts
@@ -876,7 +876,7 @@ importers:
         version: 14.3.1(@types/react@18.3.31)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       '@tryghost/koenig-lexical':
         specifier: 'catalog:'
-        version: 1.8.2(patch_hash=eb77f5ab3e1e8ef585fd1b23d3e1ab36f79e0d461991da8f7e28e93374cf4434)
+        version: 1.8.2(patch_hash=fd4910d88e320803df03e7fff30bd3a330737f6e3de621c68539d7112924a6ca)
       '@types/react':
         specifier: 'catalog:'
         version: 18.3.31
@@ -1333,7 +1333,7 @@ importers:
         version: 0.2.19
       '@tryghost/koenig-lexical':
         specifier: 'catalog:'
-        version: 1.8.2(patch_hash=eb77f5ab3e1e8ef585fd1b23d3e1ab36f79e0d461991da8f7e28e93374cf4434)
+        version: 1.8.2(patch_hash=fd4910d88e320803df03e7fff30bd3a330737f6e3de621c68539d7112924a6ca)
       '@tryghost/nql-lang':
         specifier: 'catalog:'
         version: 0.6.6
@@ -2023,7 +2023,7 @@ importers:
         version: 1.2.2
       '@tryghost/koenig-lexical':
         specifier: 'catalog:'
-        version: 1.8.2(patch_hash=eb77f5ab3e1e8ef585fd1b23d3e1ab36f79e0d461991da8f7e28e93374cf4434)
+        version: 1.8.2(patch_hash=fd4910d88e320803df03e7fff30bd3a330737f6e3de621c68539d7112924a6ca)
       '@tryghost/limit-service':
         specifier: 'catalog:'
         version: 1.5.6
@@ -28994,7 +28994,7 @@ snapshots:
     dependencies:
       semver: 7.8.1
 
-  '@tryghost/koenig-lexical@1.8.2(patch_hash=eb77f5ab3e1e8ef585fd1b23d3e1ab36f79e0d461991da8f7e28e93374cf4434)': {}
+  '@tryghost/koenig-lexical@1.8.2(patch_hash=fd4910d88e320803df03e7fff30bd3a330737f6e3de621c68539d7112924a6ca)': {}
 
   '@tryghost/limit-service@1.5.6':
     dependencies:
