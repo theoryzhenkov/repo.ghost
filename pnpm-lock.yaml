@@ -2681,7 +2681,7 @@ importers:
         version: 10.4.0
       metascraper:
         specifier: 5.45.15
-        version: 5.45.15(@noble/hashes@1.8.0)
+        version: 5.45.15(@noble/hashes@1.8.0)(supports-color@8.1.1)
       metascraper-amazon:
         specifier: 5.45.10
         version: 5.45.10(@noble/hashes@1.8.0)
@@ -8836,7 +8836,7 @@ packages:
     engines: {node: ^22.13.1 || ^24.0.0}
 
   '@tryghost/kg-default-nodes@file:vendor/koenig/tryghost-kg-default-nodes-2.1.2.tgz':
-    resolution: {integrity: sha512-Zun99vS/ita5YaYRwUrq8nZxVt1bI1jAlg9WG25kE7PNCCVL6U3gcEKmpSQHhbhgBws0MTnQXnNPwKRuvHlSMA==, tarball: file:vendor/koenig/tryghost-kg-default-nodes-2.1.2.tgz}
+    resolution: {integrity: sha512-8CSrvN2KjI/jChXGY1Kx51slP00PiR0qTXHyL4Q2vg6tqAmdPzwyEpcimb3973+vnIX4T/9imw/LZjw4e2lp2w==, tarball: file:vendor/koenig/tryghost-kg-default-nodes-2.1.2.tgz}
     version: 2.1.2
     engines: {node: ^22.13.1 || ^24.0.0}
 
@@ -8871,7 +8871,7 @@ packages:
     resolution: {integrity: sha512-pATOtb4JhSm+Tx8+7FxHdEkBIi8h43ZffPQu1Mr8bdHVLzN4FalB4fHukRYy53JZc3UEtxSVBZHeg7Q2ZPFR1Q==}
 
   '@tryghost/koenig-lexical@file:vendor/koenig/tryghost-koenig-lexical-1.8.2.tgz':
-    resolution: {integrity: sha512-Jfe9E1Ogj5Dg7xTZkyff8xljVon0w5L5+82UuoW6XkyEsT8uBc+WjoFzM8rx6VNaR5nwbmd5Ub7BU00diKYwFQ==, tarball: file:vendor/koenig/tryghost-koenig-lexical-1.8.2.tgz}
+    resolution: {integrity: sha512-zCSw1mLV5X9j6ztiNdwl497Pycq1uDayKMSKs+NrkAd7ieBVPDX33IdCuA0rWEhS+dCB8X7PFvwoFaM45WkcMA==, tarball: file:vendor/koenig/tryghost-koenig-lexical-1.8.2.tgz}
     version: 1.8.2
 
   '@tryghost/limit-service@1.5.6':
@@ -25574,7 +25574,7 @@ snapshots:
       '@types/react': 18.3.31
       react: 18.3.1
 
-  '@metascraper/helpers@5.50.1(@noble/hashes@1.8.0)':
+  '@metascraper/helpers@5.50.1(@noble/hashes@1.8.0)(supports-color@8.1.1)':
     dependencies:
       audio-extensions: 0.0.0
       chrono-node: 2.9.0
@@ -25589,7 +25589,7 @@ snapshots:
       is-uri: 1.2.14
       iso-639-3: 2.2.0
       isostring: 0.0.1
-      jsdom: 27.4.0(@noble/hashes@1.8.0)
+      jsdom: 27.4.0(@noble/hashes@1.8.0)(supports-color@8.1.1)
       jsonrepair: 3.13.3
       lodash: 4.18.1
       memoize-one: 6.0.0
@@ -38127,7 +38127,7 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  http-proxy-agent@7.0.2:
+  http-proxy-agent@7.0.2(supports-color@8.1.1):
     dependencies:
       agent-base: 7.1.4
       debug: 4.4.3(supports-color@8.1.1)
@@ -38167,7 +38167,7 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  https-proxy-agent@7.0.6:
+  https-proxy-agent@7.0.6(supports-color@8.1.1):
     dependencies:
       agent-base: 7.1.4
       debug: 4.4.3(supports-color@8.1.1)
@@ -39402,7 +39402,7 @@ snapshots:
       - supports-color
       - utf-8-validate
 
-  jsdom@27.4.0(@noble/hashes@1.8.0):
+  jsdom@27.4.0(@noble/hashes@1.8.0)(supports-color@8.1.1):
     dependencies:
       '@acemir/cssom': 0.9.31
       '@asamuzakjp/dom-selector': 6.8.1
@@ -39411,8 +39411,8 @@ snapshots:
       data-urls: 6.0.1
       decimal.js: 10.6.0
       html-encoding-sniffer: 6.0.0(@noble/hashes@1.8.0)
-      http-proxy-agent: 7.0.2
-      https-proxy-agent: 7.0.6
+      http-proxy-agent: 7.0.2(supports-color@8.1.1)
+      https-proxy-agent: 7.0.6(supports-color@8.1.1)
       is-potential-custom-element-name: 1.0.1
       parse5: 8.0.1
       saxes: 6.0.0
@@ -40599,7 +40599,7 @@ snapshots:
 
   metascraper-amazon@5.45.10(@noble/hashes@1.8.0):
     dependencies:
-      '@metascraper/helpers': 5.50.1(@noble/hashes@1.8.0)
+      '@metascraper/helpers': 5.50.1(@noble/hashes@1.8.0)(supports-color@8.1.1)
     transitivePeerDependencies:
       - '@noble/hashes'
       - bufferutil
@@ -40609,7 +40609,7 @@ snapshots:
 
   metascraper-author@5.45.10(@noble/hashes@1.8.0):
     dependencies:
-      '@metascraper/helpers': 5.50.1(@noble/hashes@1.8.0)
+      '@metascraper/helpers': 5.50.1(@noble/hashes@1.8.0)(supports-color@8.1.1)
     transitivePeerDependencies:
       - '@noble/hashes'
       - bufferutil
@@ -40619,7 +40619,7 @@ snapshots:
 
   metascraper-description@5.45.10(@noble/hashes@1.8.0):
     dependencies:
-      '@metascraper/helpers': 5.50.1(@noble/hashes@1.8.0)
+      '@metascraper/helpers': 5.50.1(@noble/hashes@1.8.0)(supports-color@8.1.1)
     transitivePeerDependencies:
       - '@noble/hashes'
       - bufferutil
@@ -40629,7 +40629,7 @@ snapshots:
 
   metascraper-image@5.45.10(@noble/hashes@1.8.0):
     dependencies:
-      '@metascraper/helpers': 5.50.1(@noble/hashes@1.8.0)
+      '@metascraper/helpers': 5.50.1(@noble/hashes@1.8.0)(supports-color@8.1.1)
     transitivePeerDependencies:
       - '@noble/hashes'
       - bufferutil
@@ -40640,7 +40640,7 @@ snapshots:
   metascraper-logo-favicon@5.42.0(@noble/hashes@1.8.0):
     dependencies:
       '@keyvhq/memoize': 2.0.3
-      '@metascraper/helpers': 5.50.1(@noble/hashes@1.8.0)
+      '@metascraper/helpers': 5.50.1(@noble/hashes@1.8.0)(supports-color@8.1.1)
       lodash: 4.18.1
       reachable-url: 1.7.2
     transitivePeerDependencies:
@@ -40652,7 +40652,7 @@ snapshots:
 
   metascraper-logo@5.45.10(@noble/hashes@1.8.0):
     dependencies:
-      '@metascraper/helpers': 5.50.1(@noble/hashes@1.8.0)
+      '@metascraper/helpers': 5.50.1(@noble/hashes@1.8.0)(supports-color@8.1.1)
       lodash: 4.18.1
     transitivePeerDependencies:
       - '@noble/hashes'
@@ -40663,7 +40663,7 @@ snapshots:
 
   metascraper-publisher@5.45.10(@noble/hashes@1.8.0):
     dependencies:
-      '@metascraper/helpers': 5.50.1(@noble/hashes@1.8.0)
+      '@metascraper/helpers': 5.50.1(@noble/hashes@1.8.0)(supports-color@8.1.1)
     transitivePeerDependencies:
       - '@noble/hashes'
       - bufferutil
@@ -40673,7 +40673,7 @@ snapshots:
 
   metascraper-title@5.45.10(@noble/hashes@1.8.0):
     dependencies:
-      '@metascraper/helpers': 5.50.1(@noble/hashes@1.8.0)
+      '@metascraper/helpers': 5.50.1(@noble/hashes@1.8.0)(supports-color@8.1.1)
     transitivePeerDependencies:
       - '@noble/hashes'
       - bufferutil
@@ -40683,7 +40683,7 @@ snapshots:
 
   metascraper-url@5.45.10(@noble/hashes@1.8.0):
     dependencies:
-      '@metascraper/helpers': 5.50.1(@noble/hashes@1.8.0)
+      '@metascraper/helpers': 5.50.1(@noble/hashes@1.8.0)(supports-color@8.1.1)
     transitivePeerDependencies:
       - '@noble/hashes'
       - bufferutil
@@ -40691,9 +40691,9 @@ snapshots:
       - supports-color
       - utf-8-validate
 
-  metascraper@5.45.15(@noble/hashes@1.8.0):
+  metascraper@5.45.15(@noble/hashes@1.8.0)(supports-color@8.1.1):
     dependencies:
-      '@metascraper/helpers': 5.50.1(@noble/hashes@1.8.0)
+      '@metascraper/helpers': 5.50.1(@noble/hashes@1.8.0)(supports-color@8.1.1)
       cheerio: 1.0.0
       lodash: 4.18.1
       whoops: 4.1.8
